@@ -30,37 +30,22 @@ public class LangConverter {
 
     public static void main(String[] args) {
 
-        Path input = FileSystems.getDefault().getPath("input").toAbsolutePath();
-        Path output = FileSystems.getDefault().getPath("output").toAbsolutePath();
+        File input = new File("input");
+        File output = new File("output");
 
-        if(!Files.exists(input)) {
-            try {
-                Files.createDirectories(input);
-            } catch (IOException e) {
-                e.printStackTrace();
-                return;
-            }
-        }
+        input.mkdirs();
+        output.mkdirs();
 
-        if(!Files.exists(output)) {
-            try {
-                Files.createDirectories(output);
-            } catch (IOException e) {
-                e.printStackTrace();
-                return;
-            }
-        }
-
-        for (File file : Objects.requireNonNull(input.toFile().listFiles())) {
+        for (File file : Objects.requireNonNull(input.listFiles())) {
             if(file.isDirectory())
                 continue;
-            String s = FilenameUtils.removeExtension(file.getName());
+            String fileCode = FilenameUtils.removeExtension(file.getName());
 
             try {
                 HashMap<String, String> parse = parse(new FileInputStream(file));
                 JsonObject convert = convert(parse);
 
-                File newFile = new File(output.toFile(), s + ".json");
+                File newFile = new File(output, fileCode + ".json");
 
                 if(!newFile.exists())
                     newFile.createNewFile();
@@ -69,15 +54,12 @@ public class LangConverter {
                 GSON.toJson(convert, writer);
                 writer.close();
 
-                System.out.println(String.format("Converted %s to %s", file.getName(), s + ".json"));
+                System.out.println(String.format("Converted %s to %s", file.getName(), fileCode + ".json"));
 
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
-
-
-
     }
 
     public static JsonObject convert(HashMap<String, String> map) {
@@ -86,17 +68,20 @@ public class LangConverter {
         return jsonObject;
     }
 
+    /*
+    Extracted Code from Minecraft's 1.8 language system.
+     */
     public static HashMap<String, String> parse(InputStream inputStream) {
         HashMap<String, String> properties = new HashMap<>();
 
         try {
-            for (String s : IOUtils.readLines(inputStream, StandardCharsets.UTF_8)) {
-                if (!s.isEmpty() && s.charAt(0) != '#') {
-                    String[] astring = Iterables.toArray(SPLITTER.split(s), String.class);
+            for (String line : IOUtils.readLines(inputStream, StandardCharsets.UTF_8)) {
+                if (!line.isEmpty() && line.charAt(0) != '#') {
+                    String[] contents = Iterables.toArray(SPLITTER.split(line), String.class);
 
-                    if (astring != null && astring.length == 2) {
-                        String s1 = astring[0];
-                        String s2 = PATTERN.matcher(astring[1]).replaceAll("%$1s");
+                    if (contents != null && contents.length == 2) {
+                        String s1 = contents[0];
+                        String s2 = PATTERN.matcher(contents[1]).replaceAll("%$1s");
                         properties.put(s1, s2);
                     }
                 }
