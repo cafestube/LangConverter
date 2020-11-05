@@ -1,51 +1,49 @@
 package eu.cafestube.util.langconverter;
 
+import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
-import netscape.javascript.JSObject;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
-import com.google.common.base.Splitter;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Objects;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.function.BiConsumer;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 public class LangConverter {
 
     private static final Splitter SPLITTER = Splitter.on('=').limit(2);
-    private static final Pattern PATTERN = Pattern.compile("%(\\d+\\$)?[\\d\\.]*[df]");
+    private static final Pattern PATTERN = Pattern.compile("%(\\d+\\$)?[\\d.]*[df]");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 
     public static void main(String[] args) {
 
-        File input = new File("input");
-        File output = new File("output");
+        final File input = new File("input");
+        final File output = new File("output");
 
         input.mkdirs();
         output.mkdirs();
 
-        for (File file : Objects.requireNonNull(input.listFiles())) {
+        final File[] files = input.listFiles(pathname -> pathname.getName().endsWith(".lang"));
+
+        if (files == null)
+            throw new IllegalStateException();
+
+        for (final File file : files) {
             if(file.isDirectory())
                 continue;
-            String fileCode = FilenameUtils.removeExtension(file.getName());
+            final String fileCode = FilenameUtils.removeExtension(file.getName());
 
             try {
-                HashMap<String, String> parse = parse(new FileInputStream(file));
-                JsonObject convert = convert(parse);
+                final Map<String, String> parse = parse(new FileInputStream(file));
+                final JsonObject convert = convert(parse);
 
-                File newFile = new File(output, fileCode + ".json");
+                final File newFile = new File(output, fileCode + ".json");
 
                 if(!newFile.exists())
                     newFile.createNewFile();
@@ -62,8 +60,8 @@ public class LangConverter {
         }
     }
 
-    public static JsonObject convert(HashMap<String, String> map) {
-        JsonObject jsonObject = new JsonObject();
+    public static JsonObject convert(Map<String, String> map) {
+        final JsonObject jsonObject = new JsonObject();
         map.forEach(jsonObject::addProperty);
         return jsonObject;
     }
@@ -71,17 +69,17 @@ public class LangConverter {
     /*
     Extracted Code from Minecraft's 1.8 language system.
      */
-    public static HashMap<String, String> parse(InputStream inputStream) {
-        HashMap<String, String> properties = new HashMap<>();
+    public static Map<String, String> parse(InputStream inputStream) {
+        final Map<String, String> properties = new LinkedHashMap<>();
 
         try {
             for (String line : IOUtils.readLines(inputStream, StandardCharsets.UTF_8)) {
                 if (!line.isEmpty() && line.charAt(0) != '#') {
-                    String[] contents = Iterables.toArray(SPLITTER.split(line), String.class);
+                    final String[] contents = Iterables.toArray(SPLITTER.split(line), String.class);
 
                     if (contents != null && contents.length == 2) {
-                        String s1 = contents[0];
-                        String s2 = PATTERN.matcher(contents[1]).replaceAll("%$1s");
+                        final String s1 = contents[0];
+                        final String s2 = PATTERN.matcher(contents[1]).replaceAll("%$1s");
                         properties.put(s1, s2);
                     }
                 }
