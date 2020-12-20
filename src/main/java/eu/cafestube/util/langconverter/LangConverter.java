@@ -34,7 +34,7 @@ public class LangConverter
         output.mkdirs();
 
         FileUtils.copyDirectory(input, output);
-        final Collection<File> files = FileUtils.listFilesAndDirs(output, FileFilterUtils.suffixFileFilter(".lang"), DirectoryFileFilter.DIRECTORY);
+        final Collection<File> files = FileUtils.listFilesAndDirs(input, FileFilterUtils.suffixFileFilter(".lang"), DirectoryFileFilter.DIRECTORY);
         files.forEach(file ->
         {
             if (!file.isDirectory())
